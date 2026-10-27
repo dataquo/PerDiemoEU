@@ -5,7 +5,7 @@
 [![ČNB Daily Fixing](https://img.shields.io/badge/%C4%8CNB-Daily%20FX%20Rates-6366f1?style=flat-square)](https://www.perdiemo.eu/cz/analyzy/online-kalkulacka-stravneho-a-cestovnich-nahrad/)
 [![API Docs](https://img.shields.io/badge/API-Reference-06b6d4?style=flat-square)](API.md)
 [![Documentation](https://img.shields.io/badge/Docs-perdiemo.eu%2Fcz%2Fdocs-8b5cf6?style=flat-square)](https://www.perdiemo.eu/cz/dokumentace)
-[![Releases](https://img.shields.io/badge/Releases-v1.0.6%20Stable-f59e0b?style=flat-square)](https://github.com/dataquo/PerDiemoEU/releases)
+[![Releases](https://img.shields.io/badge/Releases-v1.0.14%20Stable-f59e0b?style=flat-square)](https://github.com/dataquo/PerDiemoEU/releases)
 [![Dual Language](https://img.shields.io/badge/Language-CS%20%7C%20EN-3b82f6?style=flat-square)](https://www.perdiemo.eu/en)
 
 Official public portal, open architecture documentation, statutory guides, release notes, and community knowledge hub for **[PerDiemo](https://www.perdiemo.eu)** — the automated per diem (*stravné*) and business travel expense calculation platform built for Czech and European legislation.
@@ -55,6 +55,7 @@ In-depth legal analyses, court ruling commentaries, and accounting best practice
 | 🚗 [Kilometrovné a náhrada za použití soukromého vozidla](https://www.perdiemo.eu/cz/blog/kilometrovne-nahrada-za-pouziti-soukromeho-vozidla/) | 🚗 [Mileage Reimbursement & Private Vehicle Business Travel](https://www.perdiemo.eu/en/blog/mileage-reimbursement-private-vehicle-business-travel/) | Vehicle wear reimbursement & fuel average prices |
 | 👔 [Stravné jednatelů a OSVČ: Na co máte nárok](https://www.perdiemo.eu/cz/blog/stravne-jednatelu-a-osvc-na-co-mate-narok/) | 👔 [Per Diem for Directors and Freelancers: Your Entitlements](https://www.perdiemo.eu/en/blog/per-diem-for-directors-and-freelancers-your-entitlements/) | Statutory distinction: Employment vs. Executive service |
 | ⚡ [Srovnání nástrojů: Excel vs. PerDiemo](https://www.perdiemo.eu/cz/blog/srovnani-nastroju-na-cestovni-nahrady-excel-vs-perdiemo/) | ⚡ [Travel Expense Software Comparison: Excel vs. PerDiemo](https://www.perdiemo.eu/en/blog/travel-expense-software-comparison-excel-vs-perdiemo/) | Efficiency benchmark, formula risks & audit trails |
+| 🔌 [REST API automatizace cestovních náhrad a integrace ERP](https://www.perdiemo.eu/cz/blog/rest-api-automatizace-cestovnich-nahrad-integrace-erp-make/) | 🔌 [REST API Business Travel Allowance Automation & ERP Integration](https://www.perdiemo.eu/en/blog/rest-api-business-travel-allowance-automation-erp-make-integration/) | REST API v1, Dual-Auth, ERP & Make.com workflows (§§ 151–189 ZP) |
 
 ---
 
@@ -62,9 +63,11 @@ In-depth legal analyses, court ruling commentaries, and accounting best practice
 
 * 📚 **[Documentation Knowledge Base (CZ)](https://www.perdiemo.eu/cz/dokumentace)** — Complete user guides, itinerary editors, Magic Wand text parser, and OCR receipt workflows.
 * 📚 **[Documentation Knowledge Base (EN)](https://www.perdiemo.eu/en/documentation)** — Comprehensive English runbooks for onboarding, team management, and multi-currency expense filing.
+* 🔌 **[REST API Developer Documentation (CZ)](https://www.perdiemo.eu/cz/dokumentace/rest-api-a-vyvojarske-nastroje/)** ([English](https://www.perdiemo.eu/en/documentation/rest-api-and-developer-tools/)) — Official B2B REST API v1 integration guide, OpenAPI 3.1 schemas, Dual-Auth credentials, and ERP connectors.
 * 🔒 **[Enterprise Architecture & Cryptographic PDF Audit Trail](https://www.perdiemo.eu/cz/architektura)** — Overview of PerDiemo's read-only export engine, containerized architecture, and SHA-256 PDF document fingerprinting for audit defense.
 * ⚖️ **[Statutory Compliance Guarantee](https://www.perdiemo.eu/cz/legislativa)** — Detailed breakdown of Czech Labour Code articles (§§ 151–189 ZP) implemented directly in the calculation engine.
 * 🏷️ **[Transparent Flat-Rate Pricing](https://www.perdiemo.eu/cz/ceny)** ([English](https://www.perdiemo.eu/en/pricing)) — Volume-based pricing tiers with zero per-user penalties and anniversary-based quota management.
+* 📋 **[Official Downloadable Pricing Schedule (PDF)](https://www.perdiemo.eu/PerDiemo_Pricing_Schedule_2026.pdf)** — Official 3-page corporate procurement schedule for finance and accounting departments.
 
 ---
 
