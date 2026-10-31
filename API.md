@@ -1,10 +1,11 @@
 # PerDiemo REST API — Developer Documentation & Integration Guide
 
-[![API Status](https://img.shields.io/badge/API-Live%20v1.0.14-10b981?style=flat-square)](https://api.perdiemo.eu)
+[![API Status](https://img.shields.io/badge/API-Live%20v1.0.22-10b981?style=flat-square)](https://api.perdiemo.eu)
 [![Gateway](https://img.shields.io/badge/Gateway-api.perdiemo.eu-0284c7?style=flat-square)](https://api.perdiemo.eu/docs)
 [![Specification](https://img.shields.io/badge/Spec-OpenAPI%203.1-6366f1?style=flat-square)](https://api.perdiemo.eu/openapi.json)
 [![Compliance](https://img.shields.io/badge/Compliance-Z%C3%A1kon%C3%ADk%20pr%C3%A1ce%20%C2%A7%C2%A0151--189-10b981?style=flat-square)](https://www.perdiemo.eu/cz/legislativa)
 [![Format](https://img.shields.io/badge/Data-JSON%20%7C%20REST-f59e0b?style=flat-square)](https://www.perdiemo.eu)
+[![Updated](https://img.shields.io/badge/Updated-2026--10--31-0284c7?style=flat-square)](https://www.perdiemo.eu)
 
 Welcome to the official developer documentation for the **[PerDiemo](https://www.perdiemo.eu)** REST API. 
 
@@ -22,6 +23,7 @@ All API requests are routed through a high-performance Anycast edge reverse prox
 | **Local Container (DEV)** | `http://localhost:8800` | `/api/v1/*` | Internal Docker |
 
 Interactive OpenAPI documentation (Swagger UI) with live testing is available at:
+* **Official Interactive Documentation**: [https://www.perdiemo.eu/cz/dokumentace/rest-api-integrace-a-autentizace/](https://www.perdiemo.eu/cz/dokumentace/rest-api-integrace-a-autentizace/)
 * **Interactive Swagger UI**: [https://api.perdiemo.eu/docs](https://api.perdiemo.eu/docs)
 * **OpenAPI 3.1 JSON Schema**: [https://api.perdiemo.eu/openapi.json](https://api.perdiemo.eu/openapi.json)
 * **Health & Version Endpoint**: [https://api.perdiemo.eu/version](https://api.perdiemo.eu/version)
@@ -90,7 +92,82 @@ sequenceDiagram
 
 ## 🚀 Core API Endpoints
 
-### 1. Statutory Allowance Calculation (`POST /api/v1/calculate`)
+### 1. Complete Business Allowance from Text (One-Shot API) (`POST /api/v1/complete-business-allowance-from-text`)
+
+The most powerful all-in-one endpoint designed specifically for **Make.com**, **Zapier**, **n8n**, Slack bots, and ERP webhooks. Takes a raw natural language travel description and executes the full four-stage pipeline in **a single atomic call**:
+1. **AI Parsing & Zero-Distance Departure Sanitization**: Extracts stops, timestamps, vehicle modes, and free meals via PerDiemo Multi-Modal AI Engine, while enforcing `vzdalenost_km: 0.0` on departure nodes (`ODJEZD`, `NÁVRAT_ODJEZD`) and same-city layovers to prevent double-counting with OSRM segment distances.
+2. **OSRM, Flight Geodesics & Stay Duration Preservation**: Resolves driving distances per transit leg, durations, intermediate border crossings (`"COUNTRY_FROM -> COUNTRY_TO"`), and highway corridor transit stops (`"typ": "PREJEZD"`, `"_synthetic": true`) with 100% WebUI parity (applies the 3-hour flight buffer for air legs). When an overnight leg pushes arrival into a subsequent calendar day (`day_delta > 0`), the refiner shifts all subsequent legs by whole calendar days (`day_delta * 24h`), preserving exact `HH:MM` departure times and multi-day stay durations.
+3. **Statutory Calculation**: Calculates domestic/foreign per diems (§§ 163, 170 ZP), applies meal reductions, anchors CNB rates (§ 183 ZP), and generates SHA-256 audit signatures.
+4. **Optional PDF Report**: Compiles an official vector PDF expense report with hybrid delivery.
+
+> [!TIP]
+> **Make.com Credit Optimization:**
+> Traditional multi-step pipelines consume 8–15 Make operations per trip. With `complete-business-allowance-from-text`, your scenario uses **only 1 Make operation**, drastically saving your monthly operations quota!
+
+* **Method:** `POST`
+* **Endpoint:** `/api/v1/complete-business-allowance-from-text` (or alias `/api/v1/calculate-from-text`)
+* **Headers:**
+  * `Content-Type: application/json`
+  * `X-API-Key: pd_live_...`
+* **Query Parameters:**
+  * `format` *(optional)*: `"json"` (default, includes `pdf_base64`) or `"pdf"` (direct binary `application/pdf` stream).
+
+#### Request Payload Schema
+```json
+{
+  "text": "Leaving Tuesday at 7:00 AM by car from Prague to Vienna for client meetings, returning Wednesday at 4:00 PM to Prague. Hotel breakfast included.",
+  "year": 2026,
+  "legislation": "CZ",
+  "vlastnictvi_vozidla": "SLUZEBNI",
+  "generate_pdf": true,
+  "pdf_options": {
+    "employee_name": "Ing. Jan Novák",
+    "company_name": "Firma s.r.o.",
+    "company_ico": "12345678",
+    "company_address": "Vymyšlená 123, 110 00 Prague 1",
+    "language": "en"
+  }
+}
+```
+
+#### Hybrid Delivery & DB Persistence:
+* **JSON with Base64 PDF (Default):** Automatically saves the trip to the PerDiemo database, returning assigned `trip_id` (e.g. `C-2026-EA16`), URL-safe cryptographic `share_token` (e.g. `sec_mTULrzcBsh8JOEqINDZOgLfNjyLQtpty`), direct dashboard guest link `report_url` (with `?token=sec_...`), and direct authenticated download endpoint `pdf_download_url` (with `?token=sec_...`), alongside `"pdf_base64"`.
+* **Capability Share Tokens (`share_token`):** External recipients and approval workflows can view trip summaries and download PDF reports directly using the token link without requiring a PerDiemo login account.
+* **Direct Binary Stream (`format=pdf` or `Accept: application/pdf`):** Directly streams binary PDF with `Content-Disposition: attachment; filename="YYYYMMDDHHMMSS_perdiemo_export_{trip_id}_{LANG}.pdf"`.
+* **Free Tier Watermarking:** Free tier API calls generate watermarked PDFs (matching the web UI), allowing frictionless testing in Make.com without `403 Forbidden` errors. Paid tiers (Solo, Business, Pro, Enterprise) receive unwatermarked vector PDFs.
+
+---
+
+### 2. Download Stored Trip PDF (`GET /api/v1/trips/{trip_id}/pdf`)
+
+Downloads the official vector PDF travel expense report for a previously calculated and saved trip. Utilizes the unified server-side PDF enricher for 100% pixel-for-pixel visual parity with the web dashboard.
+
+* **Method:** `GET`
+* **Endpoint:** `/api/v1/trips/{trip_id}/pdf`
+* **Authentication (Dual-Mode):**
+  * **Option A (API Key):** Header `X-API-Key: pd_live_...` (or `Authorization: Bearer <token>`).
+  * **Option B (Capability Share Token):** Query parameter `?token=sec_...` (No headers required; ideal for direct browser downloads, approval emails, and webhook payloads).
+* **Headers:**
+  * `X-API-Key: pd_live_...`
+* **Query Parameters:**
+  * `lang` *(optional)*: `"en"` (default) or `"cs"`.
+  * `token` *(optional)*: Capability share token (e.g. `sec_mTULrzcBsh8JOEqINDZOgLfNjyLQtpty`). When provided, `X-API-Key` header is not required.
+
+#### Example cURL:
+```bash
+# Option A: Download via API Key
+curl -X GET "https://api.perdiemo.eu/api/v1/trips/C-2026-EA16/pdf?lang=en" \
+     -H "X-API-Key: pd_live_YOUR_API_KEY_HERE" \
+     -o expense_report_C-2026-EA16.pdf
+
+# Option B: Direct Download via Capability Share Token (No Headers Required)
+curl -X GET "https://api.perdiemo.eu/api/v1/trips/C-2026-EA16/pdf?token=sec_mTULrzcBsh8JOEqINDZOgLfNjyLQtpty&lang=en" \
+     -o expense_report_C-2026-EA16.pdf
+```
+
+---
+
+### 3. Statutory Allowance Calculation (`POST /api/v1/calculate`)
 
 Calculates statutory domestic and foreign per diems, meal reductions for employer-provided food, private vehicle wear-and-tear reimbursements, and decisive exchange rates. Generates a tamper-proof SHA-256 cryptographic verification signature for legal audit defense.
 
@@ -129,7 +206,7 @@ Calculates statutory domestic and foreign per diems, meal reductions for employe
         {
           "typ": "HRANICE_PRECHOD",
           "datum": "2026-06-10T09:30",
-          "misto": "Mikulov",
+          "misto": "CZE -> AUT",
           "vzdalenost_km": 200.0,
           "country_code": "CZE",
           "transport_type": "company_car"
@@ -154,7 +231,7 @@ Calculates statutory domestic and foreign per diems, meal reductions for employe
         {
           "typ": "HRANICE_NAVRAT",
           "datum": "2026-06-11T17:30",
-          "misto": "Mikulov",
+          "misto": "AUT -> CZE",
           "vzdalenost_km": 90.0,
           "country_code": "CZE",
           "transport_type": "company_car"
@@ -186,10 +263,10 @@ Calculates statutory domestic and foreign per diems, meal reductions for employe
 | `trips[].zamestnanec_jednatel` | string | No | Employee or company officer name. |
 | `trips[].spolecnost` | string | No | Employer company name. |
 | `trips[].bezplatna_strava` | object | No | Map of ISO date strings (`YYYY-MM-DD`) to lists of employer-provided free meals (`"snidane"`: breakfast, `"obed"`: lunch, `"vecer"`: dinner). Triggers statutory reductions (*krácení*) under §§ 163 & 170 ZP. |
-| `trips[].itinerar[].typ` | string | Yes | Leg event code: <br>• `ODJEZD` — Initial departure from origin / base.<br>• `PRIJEZD` — Arrival at destination / meeting point.<br>• `HRANICE_PRECHOD` — Outbound national border crossing.<br>• `NÁVRAT_ODJEZD` — Return leg departure.<br>• `HRANICE_NAVRAT` — Inbound national border crossing return.<br>• `KREUZ_NAVRAT` — Final return arrival at origin/home base. |
+| `trips[].itinerar[].typ` | string | Yes | Leg event code: <br>• `ODJEZD` — Initial departure from origin / base.<br>• `ZASTAVKA` — Intermediate transit or meeting stop along the route corridor.<br>• `PRIJEZD` — Arrival at destination / meeting point.<br>• `HRANICE_PRECHOD` — Outbound national border crossing (`"COUNTRY_FROM -> COUNTRY_TO"`).<br>• `NÁVRAT_ODJEZD` — Return leg departure.<br>• `HRANICE_NAVRAT` — Inbound national border crossing return.<br>• `KREUZ_NAVRAT` — Final return arrival at origin/home base. |
 | `trips[].itinerar[].datum` | string | Yes | ISO 8601 timestamp string (`YYYY-MM-DDTHH:MM`). |
 | `trips[].itinerar[].misto` | string | Yes | City or location name (e.g. `"Praha"`, `"Wien"`). |
-| `trips[].itinerar[].vzdalenost_km` | number | No | Distance driven in kilometers for this segment (used for vehicle reimbursement calculations). |
+| `trips[].itinerar[].vzdalenost_km` | number | No | Distance driven in kilometers for this segment (used for vehicle reimbursement calculations). Must be `0.0` on departure nodes (`ODJEZD`, `NÁVRAT_ODJEZD`) and same-city layovers; driven distances belong strictly on transit, border, and arrival nodes (`HRANICE_PRECHOD`, `PREJEZD`, `ZASTAVKA`, `PRIJEZD`, `HRANICE_NAVRAT`, `KREUZ_NAVRAT`). |
 | `trips[].itinerar[].country_code` | string | Yes | 3-letter ISO code (`CZE`, `AUT`, `DEU`, `SVK`, `POL`, `OZZ`). Primary statutory source of truth for rate jurisdiction. |
 | `trips[].itinerar[].transport_type` | string | No | Transport mode: `company_car`, `private_vehicle`, `plane`, `train`, `bus`, `public_transit`, `walk`. |
 
@@ -251,7 +328,7 @@ Calculates statutory domestic and foreign per diems, meal reductions for employe
 
 ---
 
-### 2. Natural Language Itinerary Extraction (`POST /api/v1/parse-itinerary`)
+### 4. Natural Language Itinerary Extraction (`POST /api/v1/parse-itinerary`)
 
 Converts unstructured free-text trip notes, Slack logs, travel approval emails, or calendar exports into structured chronological itineraries with automatic transport mode detection, intermediate border-crossing nodes, and meal provisions. Supports both English and Czech prompts.
 
@@ -271,7 +348,52 @@ Converts unstructured free-text trip notes, Slack logs, travel approval emails, 
 
 ---
 
-### 3. Programmatic Statutory PDF Report Export (`POST /api/v1/export/pdf`)
+---
+
+### 5. Route, Distance & Border Estimation (`GET /api/v1/estimate-route-leg`)
+
+Calculates driving distances (km), estimated driving times, and exact intermediate border-crossing timestamps between two cities or airport codes.
+* For ground transport (`company_car`, `private_vehicle`, `bus`, `train`), uses high-performance OSRM routing with boundary polygon intersection, returning border crossings (`"COUNTRY_FROM -> COUNTRY_TO"`, e.g. `"CZE -> DEU"`) and highway corridor transit stops (`ZASTAVKA`) across multi-country routes.
+* For flight transport (`plane`), automatically applies the recommended 3-hour airport check-in buffer (origin departure = takeoff - 3 hours, border crossing = takeoff time).
+
+* **Method:** `GET`
+* **Endpoint:** `/api/v1/estimate-route-leg`
+* **Headers:**
+  * `X-API-Key: pd_live_...`
+* **Query Parameters:**
+  * `origin` *(required)*: Departure city, municipality, or IATA airport code (e.g. `Praha` or `VIE`).
+  * `destination` *(required)*: Arrival city, municipality, or IATA airport code (e.g. `Wien` or `TFS`).
+  * `departure_time` *(required)*: ISO 8601 departure timestamp (e.g. `2026-06-10T07:00`).
+  * `origin_country` *(required)*: ISO 3-letter country code for departure location (e.g. `CZE`). Strictly enforced under Rule 14.
+  * `destination_country` *(required)*: ISO 3-letter country code for arrival location (e.g. `AUT`). Strictly enforced under Rule 14.
+  * `transport_type` *(optional)*: `company_car`, `private_vehicle`, `plane`, `train`, `bus`, `ferry`.
+
+#### Example cURL & Multi-Country Transit Response (`ZASTAVKA` Corridor Synthesis):
+```bash
+curl -X GET "https://api.perdiemo.eu/api/v1/estimate-route-leg?origin=Praha&destination=Wien&departure_time=2026-06-10T07:00&transport_type=company_car&origin_country=CZE&destination_country=AUT" \
+     -H "X-API-Key: pd_live_YOUR_API_KEY_HERE"
+```
+
+When a route transits through intermediate countries (e.g. *Brno (`CZE`) ➔ Ghent (`BEL`)* via Germany and the Netherlands), the endpoint automatically synthesizes border crossings (`"type": "border"`, `"misto": "CZE -> DEU"`) and highway corridor transit stops (`"type": "stop"`, `"country_code": "DEU"`), which map directly to `HRANICE_PRECHOD` and `ZASTAVKA` itinerary nodes:
+```json
+{
+  "distance_km": 990,
+  "duration_seconds": 34000.0,
+  "arrival_time": "2026-11-12T15:26:40",
+  "legs": [
+    { "type": "border", "misto": "CZE -> DEU", "time": "2026-11-12T09:05:54", "distance_km": 325, "transport_type": "company_car" },
+    { "type": "stop", "misto": "Nürnberg", "country_code": "DEU", "time": "2026-11-12T11:20:00", "distance_km": 245, "transport_type": "company_car" },
+    { "type": "border", "misto": "DEU -> NLD", "time": "2026-11-12T13:39:49", "distance_km": 245, "transport_type": "company_car" },
+    { "type": "stop", "misto": "Maastricht", "country_code": "NLD", "time": "2026-11-12T13:49:00", "distance_km": 18, "transport_type": "company_car" },
+    { "type": "border", "misto": "NLD -> BEL", "time": "2026-11-12T13:59:35", "distance_km": 17, "transport_type": "company_car" },
+    { "type": "stop", "misto": "Ghent", "country_code": "BEL", "time": "2026-11-12T15:26:40", "distance_km": 140, "transport_type": "company_car" }
+  ]
+}
+```
+
+---
+
+### 6. Programmatic Statutory PDF Report Export (`POST /api/v1/export/pdf`)
 
 Renders a complete, legally compliant statutory travel expense report (*Vyúčtování pracovní cesty*) in vector PDF format, stamped with the decisive ČNB exchange rate and SHA-256 cryptographic verification fingerprint.
 
@@ -287,7 +409,7 @@ Renders a complete, legally compliant statutory travel expense report (*Vyúčto
 
 ---
 
-### 4. Account Quota & Consumption Status (`GET /api/v1/user/usage`)
+### 7. Account Quota & Consumption Status (`GET /api/v1/user/usage`)
 
 Inspects active calculation and AI extraction quota consumption for the authenticated user or corporate account. Enforces strict zero-trust identity isolation.
 
@@ -311,7 +433,7 @@ Inspects active calculation and AI extraction quota consumption for the authenti
 
 ---
 
-### 5. Statutory Country Mappings (`GET /api/v1/country-mappings`)
+### 8. Statutory Country Mappings (`GET /api/v1/country-mappings`)
 
 Returns official ISO 3166-1 alpha-3 / alpha-2 country codes, Czech and English geographic designations, and statutory per diem base currencies.
 
@@ -320,7 +442,7 @@ Returns official ISO 3166-1 alpha-3 / alpha-2 country codes, Czech and English g
 
 ---
 
-### 6. Health & Engine Version Check (`GET /version`)
+### 9. Health & Engine Version Check (`GET /version`)
 
 Public endpoint returning active backend SemVer, API contract version, and runtime status.
 
@@ -332,7 +454,7 @@ Public endpoint returning active backend SemVer, API contract version, and runti
 ```json
 {
   "status": "online",
-  "version": "1.0.14",
+  "version": "1.0.22",
   "api_version": "v1",
   "service": "perdiemo-backend"
 }
@@ -400,6 +522,33 @@ class PerDiemoClient:
             f"{self.base_url}/api/v1/calculate",
             json=payload,
             timeout=30
+        )
+        r.raise_for_status()
+        return r.json()
+
+
+    def complete_from_text(
+        self,
+        text: str,
+        year: int = 2026,
+        legislation: str = "CZ",
+        vlastnictvi_vozidla: str = "SLUZEBNI",
+        generate_pdf: bool = True,
+        pdf_options: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """Execute One-Shot AI parsing, OSRM border/corridor synthesis, statutory calculation, and PDF export."""
+        payload = {
+            "text": text,
+            "year": year,
+            "legislation": legislation,
+            "vlastnictvi_vozidla": vlastnictvi_vozidla,
+            "generate_pdf": generate_pdf,
+            "pdf_options": pdf_options or {}
+        }
+        r = self.session.post(
+            f"{self.base_url}/api/v1/complete-business-allowance-from-text",
+            json=payload,
+            timeout=60
         )
         r.raise_for_status()
         return r.json()
