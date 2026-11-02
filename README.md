@@ -5,7 +5,7 @@
 [![ČNB Daily Fixing](https://img.shields.io/badge/%C4%8CNB-Daily%20FX%20Rates-6366f1?style=flat-square)](https://www.perdiemo.eu/cz/analyzy/online-kalkulacka-stravneho-a-cestovnich-nahrad/)
 [![API Docs](https://img.shields.io/badge/API-Reference-06b6d4?style=flat-square)](API.md)
 [![Documentation](https://img.shields.io/badge/Docs-perdiemo.eu%2Fcz%2Fdocs-8b5cf6?style=flat-square)](https://www.perdiemo.eu/cz/dokumentace)
-[![Releases](https://img.shields.io/badge/Releases-v1.0.14%20Stable-f59e0b?style=flat-square)](https://github.com/dataquo/PerDiemoEU/releases)
+[![Releases](https://img.shields.io/badge/Releases-v1.0.28%20Stable-f59e0b?style=flat-square)](https://github.com/dataquo/PerDiemoEU/releases)
 [![Dual Language](https://img.shields.io/badge/Language-CS%20%7C%20EN-3b82f6?style=flat-square)](https://www.perdiemo.eu/en)
 
 Official public portal, open architecture documentation, statutory guides, release notes, and community knowledge hub for **[PerDiemo](https://www.perdiemo.eu)** — the automated per diem (*stravné*) and business travel expense calculation platform built for Czech and European legislation.
