@@ -1,11 +1,11 @@
 # PerDiemo REST API — Developer Documentation & Integration Guide
 
-[![API Status](https://img.shields.io/badge/API-Live%20v1.0.22-10b981?style=flat-square)](https://api.perdiemo.eu)
+[![API Status](https://img.shields.io/badge/API-Live%20v1.0.28-10b981?style=flat-square)](https://api.perdiemo.eu)
 [![Gateway](https://img.shields.io/badge/Gateway-api.perdiemo.eu-0284c7?style=flat-square)](https://api.perdiemo.eu/docs)
 [![Specification](https://img.shields.io/badge/Spec-OpenAPI%203.1-6366f1?style=flat-square)](https://api.perdiemo.eu/openapi.json)
 [![Compliance](https://img.shields.io/badge/Compliance-Z%C3%A1kon%C3%ADk%20pr%C3%A1ce%20%C2%A7%C2%A0151--189-10b981?style=flat-square)](https://www.perdiemo.eu/cz/legislativa)
 [![Format](https://img.shields.io/badge/Data-JSON%20%7C%20REST-f59e0b?style=flat-square)](https://www.perdiemo.eu)
-[![Updated](https://img.shields.io/badge/Updated-2026--10--31-0284c7?style=flat-square)](https://www.perdiemo.eu)
+[![Updated](https://img.shields.io/badge/Updated-2026--11--02-0284c7?style=flat-square)](https://www.perdiemo.eu)
 
 Welcome to the official developer documentation for the **[PerDiemo](https://www.perdiemo.eu)** REST API. 
 
@@ -454,7 +454,7 @@ Public endpoint returning active backend SemVer, API contract version, and runti
 ```json
 {
   "status": "online",
-  "version": "1.0.22",
+  "version": "1.0.28",
   "api_version": "v1",
   "service": "perdiemo-backend"
 }
