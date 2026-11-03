@@ -97,7 +97,7 @@ PerDiemo strictly implements the statutory mandates of the **Czech Labour Code (
 
 * 🔌 **[Developer REST API Documentation](API.md)**: Official API integration guide, sequence diagrams, OpenAPI schemas, and drop-in Python/TypeScript clients.
 * 📋 **[Product Roadmap](ROADMAP.md)**: Current capabilities, upcoming milestones, and planned integrations (Pohoda XML, iDoklad, Abra Flexi).
-* 📦 **[Releases](https://github.com/dataquo/PerDiemoEU/releases)**: Official release notes and feature announcements.
+* 📦 **[Release Changelog](https://github.com/dataquo/PerDiemoEU/releases)**: Official release notes and feature announcements changelog.
 * 💡 **[Issues & Feature Requests](https://github.com/dataquo/PerDiemoEU/issues)**: Submit suggestions, vote on roadmap items, or report statutory rate adjustments.
 * 💬 **[Discussions](https://github.com/dataquo/PerDiemoEU/discussions)**: Public community Q&A on Czech and European business travel expense rules.
 
